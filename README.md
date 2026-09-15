@@ -4,6 +4,8 @@ To-do list e diário pessoal na mesma interface. App local, um usuário só, sem
 
 ## Rodando
 
+Requisitos e como resolver o erro de política de execução no Windows: ver [REQUIREMENTS.md](REQUIREMENTS.md).
+
 ```bash
 npm install
 cp .env.example .env   # no Windows: copy .env.example .env
