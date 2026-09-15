@@ -1,0 +1,65 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Task {
+  id          String    @id @default(cuid())
+  title       String
+  notes       String?
+  completed   Boolean   @default(false)
+  completedAt DateTime?
+  priority    String    @default("NONE")
+  dueDate     DateTime?
+  categoryId  String?
+  category    Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  recurrence  String?
+  isFocus     Boolean   @default(false)
+  order       Int       @default(0)
+  subtasks    Subtask[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([dueDate])
+  @@index([categoryId])
+  @@index([completed])
+}
+
+model Subtask {
+  id        String   @id @default(cuid())
+  title     String
+  completed Boolean  @default(false)
+  order     Int      @default(0)
+  taskId    String
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@index([taskId])
+}
+
+model Category {
+  id    String  @id @default(cuid())
+  name  String  @unique
+  color String
+  icon  String?
+  order Int     @default(0)
+  tasks Task[]
+}
+
+model JournalEntry {
+  id        String   @id @default(cuid())
+  date      DateTime @unique
+  mood      String
+  summary   String?
+  gratitude String?
+  improve   String?
+  freeText  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([date])
+}
