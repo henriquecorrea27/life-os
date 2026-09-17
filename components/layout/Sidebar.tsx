@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils';
 import { CategoryManager } from '@/components/categories/CategoryManager';
 import { useCommandPalette } from '@/components/providers/CommandPaletteProvider';
 import { IconButton } from '@/components/ui/IconButton';
+import { Logo } from './Logo';
 import { ThemeToggle } from './ThemeToggle';
 
 const STORAGE_KEY = 'life-os-sidebar';
@@ -57,9 +58,7 @@ export function Sidebar({ onNewTask }: { onNewTask: () => void }) {
       >
         {!collapsed ? (
           <div className="flex min-w-0 flex-1 items-center gap-2.5">
-            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-accent text-[15px] font-semibold text-white dark:text-[#111114]">
-              L
-            </span>
+            <Logo size={32} />
             <span className="min-w-0">
               <span className="block truncate text-meta font-semibold text-content-primary">
                 Life OS
@@ -70,9 +69,7 @@ export function Sidebar({ onNewTask }: { onNewTask: () => void }) {
             </span>
           </div>
         ) : (
-          <span className="grid h-8 w-8 place-items-center rounded-xl bg-accent text-[15px] font-semibold text-white dark:text-[#111114]">
-            L
-          </span>
+          <Logo size={32} />
         )}
       </div>
 

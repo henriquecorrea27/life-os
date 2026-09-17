@@ -15,6 +15,12 @@ npm run dev             # http://localhost:3000
 
 O banco é um arquivo `prisma/dev.db` local, ignorado pelo git.
 
+### Atalho no Windows
+
+`scripts/iniciar-life-os.bat` sobe o servidor e abre o app no Chrome sozinho — detecta se já está rodando (não duplica), instala dependências e configura o banco na primeira vez. Ele tem caminhos fixos para esta máquina; para usar em outra, ajuste `PROJECT_DIR` e `CHROME` no topo do arquivo.
+
+Como `.bat` não aceita ícone próprio, o launcher da Área de Trabalho é um atalho (`.lnk`) apontando pra esse arquivo, com o ícone em `logo/logo.ico`.
+
 ### Scripts
 
 | Comando | O que faz |
