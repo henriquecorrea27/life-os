@@ -37,7 +37,7 @@ export async function GET() {
   const windowStart = startOfDay(subDays(now, WINDOW_DAYS));
   const today = todayKey();
 
-  const [openCount, completedCount, overdueCount, completedRecent, allCompletedDates, entries, categories] =
+  const [openCount, completedCount, overdueCount, completedRecent, missesRecent, missTotal, allCompletedDates, entries, categories] =
     await Promise.all([
       prisma.task.count({ where: { completed: false } }),
       prisma.task.count({ where: { completed: true } }),
@@ -48,6 +48,11 @@ export async function GET() {
         where: { completed: true, completedAt: { gte: windowStart } },
         select: { completedAt: true, categoryId: true },
       }),
+      prisma.taskMiss.findMany({
+        where: { date: { gte: windowStart } },
+        select: { date: true },
+      }),
+      prisma.taskMiss.count(),
       prisma.task.findMany({
         where: { completed: true, completedAt: { not: null } },
         select: { completedAt: true },
@@ -72,11 +77,42 @@ export async function GET() {
     completionMap.set(key, (completionMap.get(key) ?? 0) + 1);
   }
 
+  const missMap = new Map<string, number>();
+  for (const miss of missesRecent) {
+    const key = dateKeyFromStored(miss.date);
+    missMap.set(key, (missMap.get(key) ?? 0) + 1);
+  }
+
   const completionByDay: StatsResponse['completionByDay'] = [];
   for (let i = WINDOW_DAYS; i >= 0; i -= 1) {
     const key = toDateKey(subDays(now, i));
-    completionByDay.push({ date: key, completed: completionMap.get(key) ?? 0 });
+    completionByDay.push({
+      date: key,
+      completed: completionMap.get(key) ?? 0,
+      missed: missMap.get(key) ?? 0,
+    });
   }
+
+  /**
+   * Taxa de conclusão = concluídas ÷ previstas, só nos dias em que algo estava
+   * previsto. Dias em branco ficam de fora: um domingo sem nenhuma tarefa não é
+   * 0% de aproveitamento, é um dia sem promessa — incluí-lo afundaria a média
+   * e faria a estatística punir o descanso.
+   */
+  function rateOver(days: number): number | null {
+    const window = completionByDay.slice(-days);
+    const active = window.filter((day) => day.completed + day.missed > 0);
+    if (active.length === 0) return null;
+    const sum = active.reduce(
+      (total, day) => total + day.completed / (day.completed + day.missed),
+      0,
+    );
+    return sum / active.length;
+  }
+
+  const daysCounted = completionByDay
+    .slice(-30)
+    .filter((day) => day.completed + day.missed > 0).length;
 
   const taskDays = new Set(
     allCompletedDates
@@ -103,7 +139,9 @@ export async function GET() {
       completedToday: completionMap.get(today) ?? 0,
       completedThisWeek: completionByDay.slice(-7).reduce((sum, day) => sum + day.completed, 0),
       overdue: overdueCount,
+      missed: missTotal,
     },
+    completionRate: { last7: rateOver(7), last30: rateOver(30), daysCounted },
     taskStreak: streakFrom(taskDays),
     journalStreak: streakFrom(journalDays),
     completionByDay,
