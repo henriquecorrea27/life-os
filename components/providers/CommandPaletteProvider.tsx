@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import {
   ArrowRight,
   CornerDownLeft,
+  Keyboard,
   Moon,
   Plus,
   Search,
@@ -32,6 +33,8 @@ import { useTheme } from './ThemeProvider';
 
 /** Evento interno: a paleta pede a criação de tarefa, o shell abre o formulário. */
 export const NEW_TASK_EVENT = 'life-os:new-task';
+/** A paleta pede a ajuda de atalhos; o shell abre o diálogo. */
+export const SHORTCUTS_EVENT = 'life-os:shortcuts';
 
 interface CommandPaletteContextValue {
   open: () => void;
@@ -73,10 +76,17 @@ export function CommandPaletteProvider({ children }: { children: ReactNode }) {
   }, [isOpen]);
 
   const trimmed = query.trim();
+
+  // A paleta vive no shell, então estas consultas montavam em TODA página e
+  // voltavam a buscar a cada invalidação — seis requisições por clique em
+  // checkbox, para alimentar uma lista que ninguém estava vendo. Só busca aberta.
   const { data: tasks } = useTasks(
     trimmed ? { view: 'all', q: trimmed, includeCompleted: true } : { view: 'today' },
+    { enabled: isOpen },
   );
-  const { data: entries } = useJournalEntries(trimmed ? { q: trimmed, limit: 6 } : { limit: 3 });
+  const { data: entries } = useJournalEntries(trimmed ? { q: trimmed, limit: 6 } : { limit: 3 }, {
+    enabled: isOpen,
+  });
 
   const items = useMemo<CommandItem[]>(() => {
     const navigation: CommandItem[] = NAV_ITEMS.filter((item) =>
@@ -97,6 +107,14 @@ export function CommandPaletteProvider({ children }: { children: ReactNode }) {
         group: 'Ações',
         icon: <Plus size={15} />,
         run: () => window.dispatchEvent(new CustomEvent(NEW_TASK_EVENT)),
+      },
+      {
+        id: 'action-shortcuts',
+        label: 'Ver atalhos de teclado',
+        hint: '?',
+        group: 'Ações',
+        icon: <Keyboard size={15} />,
+        run: () => window.dispatchEvent(new CustomEvent(SHORTCUTS_EVENT)),
       },
       {
         id: 'action-theme',

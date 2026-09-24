@@ -20,9 +20,11 @@ export const journalKeys = {
 
 export function useJournalEntries(
   params: { from?: string; to?: string; q?: string; limit?: number } = {},
+  options: { enabled?: boolean } = {},
 ) {
   return useQuery({
     queryKey: journalKeys.list(params),
+    enabled: options.enabled ?? true,
     queryFn: () => apiFetch<JournalEntryDTO[]>(`/api/journal${buildQuery(params)}`),
   });
 }

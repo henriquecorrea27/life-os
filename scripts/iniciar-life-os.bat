@@ -35,17 +35,21 @@ if not exist ".env" (
   call npm run setup
 )
 
+rem "npm run app" roda em modo producao, recompilando so quando o codigo muda.
+rem Em modo dev o Next compila cada tela na primeira visita, e o clique demorava
+rem de 0,8 a 1,9 segundo em vez dos ~50 ms de producao.
 echo Iniciando o servidor do Life OS...
-start "Life OS - servidor (feche esta janela para PARAR o app)" cmd /k npm run dev
+start "Life OS - servidor (feche esta janela para PARAR o app)" cmd /k npm run app
 
 echo Aguardando o servidor subir em %URL% ...
 set /a tentativas=0
+echo (se o codigo mudou, a primeira vez compila e leva alguns segundos a mais)
 
 :wait_loop
 set /a tentativas+=1
 curl -s -o nul "%URL%"
 if not errorlevel 1 goto open_browser
-if !tentativas! GEQ 60 (
+if !tentativas! GEQ 180 (
   echo O servidor esta demorando mais que o normal, vou abrir o navegador mesmo assim...
   goto open_browser
 )
