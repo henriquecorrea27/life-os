@@ -9,6 +9,7 @@ import { MOOD_META, type Mood } from '@/lib/constants';
 import { todayKey } from '@/lib/dates';
 import { cn, readableTint, withAlpha } from '@/lib/utils';
 import { MoodPicker } from '@/components/journal/MoodPicker';
+import { AutoTextarea } from '@/components/ui/AutoTextarea';
 import { Skeleton } from '@/components/ui/Skeleton';
 
 export function DailyCheckIn() {
@@ -123,16 +124,16 @@ export function DailyCheckIn() {
             className="overflow-hidden"
           >
             <div className="border-t border-border/60 px-5 py-4">
-              <textarea
+              <AutoTextarea
                 value={summary}
                 onChange={(event) => setSummary(event.target.value)}
                 onBlur={() => {
                   if (mood && summary !== (data?.entry?.summary ?? '')) persist(mood, summary);
                 }}
-                rows={2}
+                minRows={2}
                 placeholder="O que aconteceu hoje? (opcional)"
                 aria-label="Resumo do dia"
-                className="scroll-area w-full resize-none bg-transparent text-body leading-relaxed text-content-primary outline-none placeholder:text-content-tertiary"
+                className="w-full bg-transparent text-body leading-relaxed text-content-primary outline-none placeholder:text-content-tertiary"
               />
 
               <div className="mt-3 flex items-center justify-between gap-3">

@@ -1,8 +1,10 @@
 'use client';
 
+import { differenceInCalendarDays } from 'date-fns';
 import { useMemo, useState } from 'react';
 import { MOODS, MOOD_META, type Mood } from '@/lib/constants';
-import { capitalize, formatShort } from '@/lib/dates';
+import { capitalize, dateKeyToLocal, formatShort } from '@/lib/dates';
+import { clamp } from '@/lib/utils';
 import { ChartTooltip } from './ChartTooltip';
 
 interface Point {
@@ -19,10 +21,27 @@ const LIMIT = 40;
  * Linha de humor das últimas entradas. Série única: sem legenda de série, mas com
  * os rótulos da escala (muito ruim → muito bom) no eixo, que é o que dá sentido
  * à altura. Cada ponto usa a cor do próprio humor.
+ *
+ * O eixo x é o calendário, não a posição na lista: espaçar por índice faria uma
+ * semana sem diário parecer idêntica a dois dias seguidos, e é justamente o
+ * buraco no registro que interessa ver.
  */
 export function MoodTrend({ data }: { data: Point[] }) {
   const [hovered, setHovered] = useState<number | null>(null);
-  const points = useMemo(() => data.slice(-LIMIT), [data]);
+  const points = useMemo(() => [...data].sort((a, b) => a.date.localeCompare(b.date)).slice(-LIMIT), [data]);
+
+  const coords = useMemo(() => {
+    if (points.length < 2) return [];
+    const first = dateKeyToLocal(points[0].date);
+    const last = dateKeyToLocal(points[points.length - 1].date);
+    const span = Math.max(differenceInCalendarDays(last, first), 1);
+
+    return points.map((point) => ({
+      ...point,
+      x: (differenceInCalendarDays(dateKeyToLocal(point.date), first) / span) * WIDTH,
+      y: HEIGHT - ((point.score - 1) / 4) * HEIGHT,
+    }));
+  }, [points]);
 
   if (points.length < 2) {
     return (
@@ -34,12 +53,6 @@ export function MoodTrend({ data }: { data: Point[] }) {
       </section>
     );
   }
-
-  const coords = points.map((point, index) => ({
-    ...point,
-    x: (index / (points.length - 1)) * WIDTH,
-    y: HEIGHT - ((point.score - 1) / 4) * HEIGHT,
-  }));
 
   const path = coords
     .map((coord, index) => `${index === 0 ? 'M' : 'L'}${coord.x.toFixed(2)} ${coord.y.toFixed(2)}`)
@@ -128,24 +141,35 @@ export function MoodTrend({ data }: { data: Point[] }) {
             ))}
           </div>
 
-          {/* Faixas invisíveis: alvo de hover bem maior que o marcador */}
-          <div className="absolute inset-0 flex">
-            {coords.map((coord, index) => (
-              <button
-                key={coord.date}
-                type="button"
-                onMouseEnter={() => setHovered(index)}
-                onMouseLeave={() => setHovered(null)}
-                onFocus={() => setHovered(index)}
-                onBlur={() => setHovered(null)}
-                aria-label={`${coord.date}: ${MOOD_META[coord.mood].label}`}
-                className="h-full flex-1"
-              />
-            ))}
+          {/* Faixas invisíveis: cada uma cobre até o meio do caminho para o ponto
+              vizinho, então o alvo acompanha o espaçamento irregular das datas. */}
+          <div className="absolute inset-0">
+            {coords.map((coord, index) => {
+              const previous = coords[index - 1];
+              const next = coords[index + 1];
+              const from = previous ? (previous.x + coord.x) / 2 : 0;
+              const to = next ? (coord.x + next.x) / 2 : WIDTH;
+              return (
+                <button
+                  key={coord.date}
+                  type="button"
+                  onMouseEnter={() => setHovered(index)}
+                  onMouseLeave={() => setHovered(null)}
+                  onFocus={() => setHovered(index)}
+                  onBlur={() => setHovered(null)}
+                  aria-label={`${coord.date}: ${MOOD_META[coord.mood].label}`}
+                  className="absolute top-0 h-full"
+                  style={{
+                    left: `${(from / WIDTH) * 100}%`,
+                    width: `${clamp(((to - from) / WIDTH) * 100, 0, 100)}%`,
+                  }}
+                />
+              );
+            })}
           </div>
 
-          {hovered !== null ? (
-            <ChartTooltip x={`${((hovered + 0.5) / coords.length) * 100}%`} y={-4}>
+          {hovered !== null && coords[hovered] ? (
+            <ChartTooltip x={`${(coords[hovered].x / WIDTH) * 100}%`} y={-4}>
               <p className="whitespace-nowrap text-micro font-medium text-content-primary">
                 {MOOD_META[coords[hovered].mood].label}
               </p>
@@ -155,6 +179,11 @@ export function MoodTrend({ data }: { data: Point[] }) {
             </ChartTooltip>
           ) : null}
         </div>
+      </div>
+
+      <div className="mt-2 flex justify-between text-micro text-content-tertiary">
+        <span>{capitalize(formatShort(points[0].date))}</span>
+        <span>{capitalize(formatShort(points[points.length - 1].date))}</span>
       </div>
     </section>
   );

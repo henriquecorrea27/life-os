@@ -18,6 +18,7 @@ import { JOURNAL_PROMPTS, MOOD_META, type Mood } from '@/lib/constants';
 import { capitalize, formatLong, shiftKey, todayKey } from '@/lib/dates';
 import { cn, withAlpha } from '@/lib/utils';
 import { useToast } from '@/components/providers/ToastProvider';
+import { AutoTextarea } from '@/components/ui/AutoTextarea';
 import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { IconButton } from '@/components/ui/IconButton';
@@ -192,13 +193,13 @@ export function JournalEditor({ date }: { date: string }) {
               >
                 O que aconteceu
               </label>
-              <textarea
+              <AutoTextarea
                 id="journal-summary"
                 value={draft.summary}
                 onChange={(event) => update('summary', event.target.value)}
-                rows={3}
+                minRows={3}
                 placeholder="Um resumo do dia, do jeito que vier."
-                className="scroll-area mt-2 w-full resize-none bg-transparent text-body leading-relaxed text-content-primary outline-none placeholder:text-content-tertiary"
+                className="mt-2 w-full bg-transparent text-body leading-relaxed text-content-primary outline-none placeholder:text-content-tertiary"
               />
             </section>
 
@@ -211,13 +212,13 @@ export function JournalEditor({ date }: { date: string }) {
                   <Heart size={13} className="text-[#F472B6]" />
                   Destaque positivo
                 </label>
-                <textarea
+                <AutoTextarea
                   id="journal-gratitude"
                   value={draft.gratitude}
                   onChange={(event) => update('gratitude', event.target.value)}
-                  rows={3}
+                  minRows={3}
                   placeholder="Algo bom que aconteceu."
-                  className="scroll-area mt-2 w-full resize-none bg-transparent text-meta leading-relaxed text-content-primary outline-none placeholder:text-content-tertiary"
+                  className="mt-2 w-full bg-transparent text-meta leading-relaxed text-content-primary outline-none placeholder:text-content-tertiary"
                 />
               </section>
 
@@ -229,13 +230,13 @@ export function JournalEditor({ date }: { date: string }) {
                   <Sprout size={13} className="text-[#34D399]" />
                   O que poderia ser melhor
                 </label>
-                <textarea
+                <AutoTextarea
                   id="journal-improve"
                   value={draft.improve}
                   onChange={(event) => update('improve', event.target.value)}
-                  rows={3}
+                  minRows={3}
                   placeholder="Sem culpa — só observação."
-                  className="scroll-area mt-2 w-full resize-none bg-transparent text-meta leading-relaxed text-content-primary outline-none placeholder:text-content-tertiary"
+                  className="mt-2 w-full bg-transparent text-meta leading-relaxed text-content-primary outline-none placeholder:text-content-tertiary"
                 />
               </section>
             </div>
@@ -247,13 +248,13 @@ export function JournalEditor({ date }: { date: string }) {
               >
                 Diário livre
               </label>
-              <textarea
+              <AutoTextarea
                 id="journal-free"
                 value={draft.freeText}
                 onChange={(event) => update('freeText', event.target.value)}
-                rows={8}
+                minRows={8}
                 placeholder="Espaço aberto. Escreva o quanto quiser."
-                className="scroll-area mt-2 w-full resize-none bg-transparent text-body leading-relaxed text-content-primary outline-none placeholder:text-content-tertiary"
+                className="mt-2 w-full bg-transparent text-body leading-relaxed text-content-primary outline-none placeholder:text-content-tertiary"
               />
 
               <div className="mt-3 flex flex-wrap gap-1.5 border-t border-border/60 pt-3">

@@ -9,10 +9,12 @@ export function DayProgress({
   completed,
   total,
   streak,
+  overdue = 0,
 }: {
   completed: number;
   total: number;
   streak?: number;
+  overdue?: number;
 }) {
   const remaining = Math.max(total - completed, 0);
   const allDone = total > 0 && remaining === 0;
@@ -29,8 +31,24 @@ export function DayProgress({
               ? 'Dia concluído'
               : `${remaining} ${pluralize(remaining, 'tarefa restante', 'tarefas restantes')}`}
         </p>
-        <p className="mt-0.5 text-meta tabular-nums text-content-secondary">
-          {total === 0 ? 'Adicione algo abaixo para começar' : `${completed} de ${total} concluídas`}
+        <p className="mt-0.5 text-meta text-content-secondary">
+          {total === 0 ? (
+            'Adicione algo abaixo para começar'
+          ) : (
+            <>
+              <span className="tabular-nums">
+                {completed} de {total} concluídas
+              </span>
+              {overdue > 0 ? (
+                <>
+                  <span className="px-1.5 text-content-tertiary">·</span>
+                  <span className="tabular-nums text-[#EF4444]">
+                    {overdue} {pluralize(overdue, 'atrasada', 'atrasadas')}
+                  </span>
+                </>
+              ) : null}
+            </>
+          )}
         </p>
       </div>
 

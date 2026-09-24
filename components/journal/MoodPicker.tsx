@@ -58,13 +58,16 @@ export function MoodPicker({
             <MoodIcon mood={mood} size={iconSize} active={selected} />
             <span
               className={cn(
-                'text-micro font-medium transition-colors',
+                'whitespace-nowrap text-micro font-medium transition-colors',
                 size === 'sm' && 'sr-only',
                 selected ? '' : 'text-content-tertiary group-hover:text-content-secondary',
               )}
               style={selected ? { color: readableTint(meta.color) } : undefined}
             >
-              {meta.label}
+              {/* Cinco colunas: "Muito ruim"/"Muito bom" só cabem no seletor grande
+                  do editor de diário. Nos menores (card da home, rail lateral) o
+                  nome curto evita quebra de linha e estouro do card. */}
+              {size === 'lg' ? meta.label : meta.short}
             </span>
           </motion.button>
         );

@@ -14,15 +14,17 @@ export const PRIORITY_META: Record<
 export const MOODS = ['VERY_BAD', 'BAD', 'NEUTRAL', 'GOOD', 'VERY_GOOD'] as const;
 export type Mood = (typeof MOODS)[number];
 
+// `short` existe porque "Muito ruim"/"Muito bom" quebram em duas linhas num
+// seletor de cinco colunas em tela de celular, desalinhando os ícones.
 export const MOOD_META: Record<
   Mood,
-  { label: string; color: string; score: number }
+  { label: string; short: string; color: string; score: number }
 > = {
-  VERY_BAD: { label: 'Muito ruim', color: '#94A3B8', score: 1 },
-  BAD: { label: 'Ruim', color: '#A5B4CB', score: 2 },
-  NEUTRAL: { label: 'Neutro', color: '#C4B5FD', score: 3 },
-  GOOD: { label: 'Bom', color: '#93C5FD', score: 4 },
-  VERY_GOOD: { label: 'Muito bom', color: '#FCD34D', score: 5 },
+  VERY_BAD: { label: 'Muito ruim', short: 'Péssimo', color: '#94A3B8', score: 1 },
+  BAD: { label: 'Ruim', short: 'Ruim', color: '#A5B4CB', score: 2 },
+  NEUTRAL: { label: 'Neutro', short: 'Neutro', color: '#C4B5FD', score: 3 },
+  GOOD: { label: 'Bom', short: 'Bom', color: '#93C5FD', score: 4 },
+  VERY_GOOD: { label: 'Muito bom', short: 'Ótimo', color: '#FCD34D', score: 5 },
 };
 
 export const CATEGORY_PALETTE = [

@@ -16,7 +16,7 @@ export function PageShell({
   subtitle?: ReactNode;
   action?: ReactNode;
   children: ReactNode;
-  width?: 'md' | 'lg';
+  width?: 'md' | 'lg' | 'xl';
 }) {
   return (
     <motion.main
@@ -25,10 +25,18 @@ export function PageShell({
       transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
       className={cn(
         'mx-auto w-full px-5 pb-16 pt-7 sm:px-8 md:pt-12',
-        width === 'lg' ? 'max-w-5xl' : 'max-w-3xl',
+        width === 'xl' ? 'max-w-6xl' : width === 'lg' ? 'max-w-5xl' : 'max-w-3xl',
       )}
     >
-      <header className="mb-7 flex items-start justify-between gap-4">
+      {/* Em 'xl' a página só abre para duas colunas a partir do breakpoint xl.
+          Abaixo dele, cabeçalho e conteúdo voltam à mesma coluna estreita — senão
+          o título ficaria pendurado na borda de uma área muito mais larga que ele. */}
+      <header
+        className={cn(
+          'mb-7 flex items-start justify-between gap-4',
+          width === 'xl' && 'mx-auto w-full max-w-3xl xl:max-w-none',
+        )}
+      >
         <div className="min-w-0">
           <h1 className="text-page font-semibold text-content-primary">{title}</h1>
           {subtitle ? (

@@ -1,6 +1,6 @@
 'use client';
 
-import { BookOpen, CalendarClock, CheckCircle2, Flame, TrendingUp } from 'lucide-react';
+import { BookOpen, CheckCircle2, Flame, Percent, TrendingUp } from 'lucide-react';
 import { useStats } from '@/hooks/useStats';
 import { MOOD_META } from '@/lib/constants';
 import { pluralize, readableTint } from '@/lib/utils';
@@ -56,15 +56,19 @@ export default function StatsPage() {
             accent="#34D399"
           />
           <StatTile
-            icon={CalendarClock}
-            label="Em aberto"
-            value={stats.totals.open}
-            hint={
-              stats.totals.overdue > 0
-                ? `${stats.totals.overdue} ${pluralize(stats.totals.overdue, 'atrasada', 'atrasadas')}`
-                : 'nada atrasado'
+            icon={Percent}
+            label="Conclusão"
+            value={
+              stats.completionRate.last30 === null
+                ? '—'
+                : `${Math.round(stats.completionRate.last30 * 100)}%`
             }
-            accent={stats.totals.overdue > 0 ? '#F87171' : undefined}
+            hint={
+              stats.completionRate.daysCounted === 0
+                ? 'marque o que não deu para fazer'
+                : `do previsto · ${stats.completionRate.daysCounted} ${pluralize(stats.completionRate.daysCounted, 'dia contado', 'dias contados')}`
+            }
+            accent="#60A5FA"
           />
           <StatTile
             icon={BookOpen}
@@ -77,9 +81,13 @@ export default function StatsPage() {
 
         <CompletionChart data={stats.completionByDay} days={30} />
 
-        <MoodTrend data={stats.moodByDay} />
-
-        <MoodHeatmap entries={stats.moodByDay} />
+        {/* Os dois cartões de humor lado a lado: leem-se juntos (a grade mostra a
+            constância, a curva mostra a direção) e nenhum dos dois precisa da
+            largura total da página. */}
+        <div className="grid items-start gap-4 lg:grid-cols-2">
+          <MoodHeatmap entries={stats.moodByDay} />
+          <MoodTrend data={stats.moodByDay} />
+        </div>
 
         <CategoryBreakdown rows={stats.byCategory} />
 
