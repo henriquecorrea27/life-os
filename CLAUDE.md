@@ -94,6 +94,15 @@ model Category {
   tasks     Task[]
 }
 
+model TaskMiss {
+  id     String   @id @default(cuid())
+  taskId String
+  task   Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  date   DateTime // dia em que a tarefa estava prevista e não foi feita
+
+  @@unique([taskId, date])
+}
+
 model JournalEntry {
   id          String   @id @default(cuid())
   date        DateTime @unique // um registro por dia (granularidade de dia, sem hora)
@@ -135,6 +144,7 @@ Ajuste livremente durante a implementação, mas mantenha a separação: tarefas
 - Atalhos de teclado (criar tarefa, marcar concluída, navegar entre views)
 - Categorias customizáveis (criar/editar/cor)
 - Modo "foco do dia": lista curada manualmente do que importa hoje, separado do backlog geral
+- Marcar "não fiz hoje" (por tarefa ou "fechar o dia"): registra a falha e empurra para amanhã, alimentando a taxa de conclusão
 
 ## 6. Funcionalidades — Diário / Check-in diário
 
@@ -151,6 +161,7 @@ Ajuste livremente durante a implementação, mas mantenha a separação: tarefas
 - Prompts opcionais para ajudar a escrever ("O que te deixou orgulhoso hoje?", "O que poderia ter sido melhor?")
 - Vincular tarefas concluídas do dia automaticamente ao resumo da entrada (ex.: mostrar na entrada do diário quais tarefas foram feitas naquele dia, como contexto)
 - Busca por texto dentro do diário
+- Revisão semanal automática (`/review`): resumo de segunda a domingo montado a partir das tarefas e do diário, sem nada para preencher
 
 Não inclua fotos/anexos multimídia no MVP — mantém o escopo simples e rápido de construir.
 
@@ -236,6 +247,8 @@ Mobile-first mesmo sendo um app pessoal: o Henrique provavelmente vai querer abr
 - Componentes em PascalCase, arquivos de componente `ComponentName.tsx`.
 - Hooks customizados em `/hooks`, prefixo `use`.
 - Toda chamada de API do client passa por um hook React Query (`useTasks`, `useCreateTask`, `useJournalEntry` etc.) — nunca `fetch` direto dentro de componente de UI.
+- Texto pesquisável vive numa coluna `searchText` normalizada (`buildSearchText` em `lib/utils.ts`), preenchida em toda escrita. O `LIKE` do SQLite não ignora acento, então buscar na coluna crua perde "PREGÃO" vs "pregão".
+- Toda rota que escreve no banco chama `scheduleBackup()` — o backup é o que protege a única cópia do diário.
 - Commits pequenos e descritivos, em português, no formato `feat: adiciona quick-add de tarefas`, `fix: corrige timezone da entrada de diário`.
 - Sem comentários óbvios no código; comente só decisões não triviais.
 - Acessibilidade básica: labels em inputs, `aria-label` em botões só com ícone, contraste mínimo AA nas cores acima (já validadas para isso).
@@ -253,10 +266,30 @@ Mobile-first mesmo sendo um app pessoal: o Henrique provavelmente vai querer abr
 
 Construa nessa ordem. Não pule para "polimento" antes do MVP funcional das duas partes (tarefas + diário) estarem de pé — é melhor ter as duas partes simples funcionando do que uma parte muito bonita e a outra ausente.
 
+## 9.1 No radar (ideia aceita, ainda não implementada)
+
+**Resumo em prosa da semana.** Hoje `/review` calcula tudo que é calculável e cita
+na íntegra o que o Henrique escreveu nos campos de destaque e "poderia ser melhor".
+O que falta é uma síntese em palavras novas — "sua semana foi puxada no trabalho e
+você adiou estudo três vezes seguidas". Isso exige um modelo de linguagem lendo o
+texto do diário, o que traz três decisões ainda não tomadas:
+
+1. **Onde o modelo roda.** Uma API externa significa mandar o diário para fora, o que
+   contraria o espírito de app local desta seção 10. Um modelo local (Ollama) mantém
+   tudo na máquina em troca de setup e RAM.
+2. **Quando roda.** Sob demanda (botão "resumir a semana") custa menos e deixa claro
+   que a síntese é gerada; automático no domingo é mais fluido e mais caro.
+3. **Como o texto é marcado.** O resumo precisa ser visivelmente distinto do que o
+   Henrique escreveu — um resumo gerado que se passa por anotação dele próprio
+   corromperia o registro histórico, que é o valor central do diário.
+
+Enquanto isso não for decidido, a regra vale: **não inventar síntese do texto dele**.
+Citar literal é melhor que parafrasear errado.
+
 ## 10. Fora de escopo (não implementar a menos que pedido)
 
 - Autenticação/login/múltiplos usuários
-- Sincronização em nuvem / backend externo
+- Sincronização em nuvem / backend externo (o backup grava numa pasta local sincronizada pelo Google Drive para Desktop — é um caminho de arquivo, não uma integração de API)
 - Notificações push
 - Integrações externas (calendário do Google, Slack, etc.)
 - Anexos de arquivo/foto no diário

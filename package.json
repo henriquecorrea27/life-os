@@ -13,7 +13,12 @@
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
     "db:studio": "prisma studio",
-    "setup": "prisma db push && tsx prisma/seed.ts"
+    "setup": "prisma db push && tsx prisma/seed.ts && tsx scripts/backfill-search.ts",
+    "backup": "tsx scripts/backup.ts",
+    "backup:force": "tsx scripts/backup.ts --force",
+    "db:backfill": "tsx scripts/backfill-search.ts",
+    "restore": "tsx scripts/restore.ts",
+    "app": "node scripts/start-app.mjs"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
