@@ -10,6 +10,8 @@ interface GroupedProps {
   onEdit: (task: TaskDTO) => void;
   onDelete: (task: TaskDTO) => void;
   onToggleFocus?: (task: TaskDTO) => void;
+  onMiss?: (task: TaskDTO) => void;
+  onToggleSubtask?: (task: TaskDTO, subtaskId: string) => void;
   mode: 'due' | 'date';
 }
 

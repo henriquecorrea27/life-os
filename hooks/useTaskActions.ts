@@ -4,13 +4,22 @@ import { useCallback } from 'react';
 import { useToast } from '@/components/providers/ToastProvider';
 import type { TaskFormValues } from '@/components/tasks/TaskForm';
 import type { TaskDTO } from '@/lib/types';
-import { useCreateTask, useDeleteTask, useReorderTasks, useUpdateTask } from './useTasks';
+import {
+  useCreateTask,
+  useDeleteTask,
+  useMissTask,
+  useReorderTasks,
+  useUnmissTask,
+  useUpdateTask,
+} from './useTasks';
 
 export function useTaskActions() {
   const createTask = useCreateTask();
   const updateTask = useUpdateTask();
   const deleteTask = useDeleteTask();
   const reorderTasks = useReorderTasks();
+  const missTask = useMissTask();
+  const unmissTask = useUnmissTask();
   const { toast } = useToast();
 
   const toggle = useCallback(
@@ -73,6 +82,57 @@ export function useTaskActions() {
     [deleteTask, createTask, toast],
   );
 
+  // Marcar subtarefa direto na lista: o PATCH substitui o array inteiro, então
+  // reenviamos todas com só uma virada.
+  const toggleSubtask = useCallback(
+    (task: TaskDTO, subtaskId: string) => {
+      updateTask.mutate(
+        {
+          id: task.id,
+          subtasks: task.subtasks.map((subtask) => ({
+            id: subtask.id,
+            title: subtask.title,
+            completed: subtask.id === subtaskId ? !subtask.completed : subtask.completed,
+          })),
+        },
+        {
+          onError: (error) =>
+            toast({
+              message: 'Não consegui atualizar a subtarefa',
+              description: error instanceof Error ? error.message : undefined,
+              tone: 'error',
+            }),
+        },
+      );
+    },
+    [updateTask, toast],
+  );
+
+  // "Não fiz hoje": some da lista de hoje, conta na taxa de conclusão e volta
+  // para amanhã. O desfazer traz de volta e apaga a falha registrada.
+  const miss = useCallback(
+    (task: TaskDTO) => {
+      missTask.mutate(task.id, {
+        onSuccess: () =>
+          toast({
+            message: 'Marcada como não feita hoje',
+            description: `${task.title} — voltou para amanhã`,
+            action: {
+              label: 'Desfazer',
+              onClick: () => unmissTask.mutate(task.id),
+            },
+          }),
+        onError: (error) =>
+          toast({
+            message: 'Não consegui registrar',
+            description: error instanceof Error ? error.message : undefined,
+            tone: 'error',
+          }),
+      });
+    },
+    [missTask, unmissTask, toast],
+  );
+
   const save = useCallback(
     async (values: TaskFormValues, task: TaskDTO | null) => {
       try {
@@ -103,6 +163,8 @@ export function useTaskActions() {
     toggle,
     toggleFocus,
     remove,
+    miss,
+    toggleSubtask,
     save,
     reorder,
     saving: createTask.isPending || updateTask.isPending,

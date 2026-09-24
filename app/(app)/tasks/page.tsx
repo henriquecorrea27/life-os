@@ -147,6 +147,8 @@ function TasksView() {
             onEdit={setEditing}
             onDelete={actions.remove}
             onToggleFocus={actions.toggleFocus}
+            onMiss={actions.miss}
+            onToggleSubtask={actions.toggleSubtask}
           />
         ) : view === 'all' ? (
           <TaskGroups
@@ -156,6 +158,8 @@ function TasksView() {
             onEdit={setEditing}
             onDelete={actions.remove}
             onToggleFocus={actions.toggleFocus}
+            onMiss={actions.miss}
+            onToggleSubtask={actions.toggleSubtask}
           />
         ) : (
           <TaskList
@@ -164,6 +168,8 @@ function TasksView() {
             onEdit={setEditing}
             onDelete={actions.remove}
             onToggleFocus={view === 'completed' ? undefined : actions.toggleFocus}
+            onMiss={view === 'completed' ? undefined : actions.miss}
+            onToggleSubtask={actions.toggleSubtask}
             onReorder={view === 'completed' ? undefined : actions.reorder}
           />
         )}

@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { PanelLeftClose, PanelLeftOpen, Plus, Search, SlidersHorizontal } from 'lucide-react';
+import { Keyboard, PanelLeftClose, PanelLeftOpen, Plus, Search, SlidersHorizontal } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -9,7 +9,7 @@ import { useCategories } from '@/hooks/useCategories';
 import { isActivePath, NAV_ITEMS } from '@/lib/nav';
 import { cn } from '@/lib/utils';
 import { CategoryManager } from '@/components/categories/CategoryManager';
-import { useCommandPalette } from '@/components/providers/CommandPaletteProvider';
+import { SHORTCUTS_EVENT, useCommandPalette } from '@/components/providers/CommandPaletteProvider';
 import { IconButton } from '@/components/ui/IconButton';
 import { Logo } from './Logo';
 import { ThemeToggle } from './ThemeToggle';
@@ -190,6 +190,14 @@ export function Sidebar({ onNewTask }: { onNewTask: () => void }) {
         )}
       >
         <ThemeToggle size="sm" />
+        <IconButton
+          size="sm"
+          aria-label="Ver atalhos de teclado"
+          title="Atalhos (?)"
+          onClick={() => window.dispatchEvent(new CustomEvent(SHORTCUTS_EVENT))}
+        >
+          <Keyboard size={15} />
+        </IconButton>
         <IconButton
           size="sm"
           aria-label={collapsed ? 'Expandir menu' : 'Recolher menu'}
