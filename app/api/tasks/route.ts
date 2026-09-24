@@ -4,6 +4,8 @@ import { prisma } from '@/lib/db';
 import { fail, ok, readBody, TASK_INCLUDE } from '@/lib/api-helpers';
 import { dateKeyToStored, shiftKey, todayKey } from '@/lib/dates';
 import { taskToDTO } from '@/lib/serialize';
+import { buildSearchText, normalizeSearch } from '@/lib/utils';
+import { scheduleBackup } from '@/lib/backup';
 import { createTaskSchema } from '@/lib/validations/task';
 
 export const dynamic = 'force-dynamic';
@@ -22,9 +24,8 @@ export async function GET(request: Request) {
 
   if (categoryId) filters.push({ categoryId });
   if (query) {
-    filters.push({
-      OR: [{ title: { contains: query } }, { notes: { contains: query } }],
-    });
+    // Busca na coluna normalizada: acha "pregão" digitando "PREGAO".
+    filters.push({ searchText: { contains: normalizeSearch(query) } });
   }
 
   switch (view) {
@@ -102,6 +103,7 @@ export async function POST(request: Request) {
       recurrence: data.recurrence ?? null,
       isFocus: data.isFocus ?? false,
       order: nextOrder,
+      searchText: buildSearchText(data.title, data.notes),
       subtasks: data.subtasks?.length
         ? {
             create: data.subtasks.map((title, index) => ({ title, order: index })),
@@ -111,5 +113,6 @@ export async function POST(request: Request) {
     include: TASK_INCLUDE,
   });
 
+  scheduleBackup();
   return ok(taskToDTO(task), 201);
 }

@@ -4,6 +4,8 @@ import { ok, readBody } from '@/lib/api-helpers';
 import { dateKeyToStored, isValidDateKey } from '@/lib/dates';
 import { journalToDTO } from '@/lib/serialize';
 import { journalEntrySchema } from '@/lib/validations/journal';
+import { buildSearchText, normalizeSearch } from '@/lib/utils';
+import { scheduleBackup } from '@/lib/backup';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,12 +25,7 @@ export async function GET(request: Request) {
     where.date = { ...(where.date as object), lte: dateKeyToStored(to) };
   }
   if (query) {
-    where.OR = [
-      { summary: { contains: query } },
-      { gratitude: { contains: query } },
-      { improve: { contains: query } },
-      { freeText: { contains: query } },
-    ];
+    where.searchText = { contains: normalizeSearch(query) };
   }
 
   const entries = await prisma.journalEntry.findMany({
@@ -51,6 +48,7 @@ export async function POST(request: Request) {
     gratitude: data.gratitude ?? null,
     improve: data.improve ?? null,
     freeText: data.freeText ?? null,
+    searchText: buildSearchText(data.summary, data.gratitude, data.improve, data.freeText),
   };
 
   const entry = await prisma.journalEntry.upsert({
@@ -59,5 +57,6 @@ export async function POST(request: Request) {
     create: { date, ...payload },
   });
 
+  scheduleBackup();
   return ok(journalToDTO(entry), 201);
 }

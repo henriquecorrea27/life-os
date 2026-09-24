@@ -2,6 +2,7 @@ import { addDays, nextDay, type Day } from 'date-fns';
 import type { Priority } from './constants';
 import { toDateKey, todayKey, type DateKey } from './dates';
 import type { CategoryDTO } from './types';
+import { stripDiacritics } from './utils';
 
 export interface ParsedQuickAdd {
   title: string;
@@ -14,12 +15,8 @@ export interface ParsedQuickAdd {
   isFocus: boolean;
 }
 
-export function normalize(value: string): string {
-  return value
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .toLowerCase();
-}
+// Sem trim: o `cut` abaixo recorta o texto original pelos indices do normalizado.
+export const normalize = stripDiacritics;
 
 const WEEKDAY_WORDS: { pattern: RegExp; day: Day }[] = [
   { pattern: /\b(domingo|dom)\b/, day: 0 },

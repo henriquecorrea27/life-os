@@ -28,6 +28,41 @@ export function readableTint(hex: string, strength = 62): string {
   return `color-mix(in oklab, ${hex} ${strength}%, var(--text-primary))`;
 }
 
+/**
+ * Minúsculas e sem acento, para comparação de texto.
+ *
+ * O `LIKE` do SQLite (que é o que o `contains` do Prisma vira) só ignora
+ * maiúsculas em ASCII: "TRADES" acha "Trades", mas "PREGÃO" não acha "pregão".
+ * Guardamos uma cópia normalizada do texto em `searchText` e buscamos nela.
+ *
+ * A faixa ̀-ͯ são os diacríticos combinantes que o NFD separa das
+ * letras — escrita escapada de propósito, porque escrita literal é invisível
+ * num editor e qualquer conversão de encoding a quebraria em silêncio.
+ */
+export function stripDiacritics(value: string): string {
+  return value
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase();
+}
+
+/**
+ * Versão para busca: além de tirar acento, apara e colapsa espaços.
+ *
+ * Separada de `stripDiacritics` de propósito — o parser do quick-add casa padrões
+ * no texto normalizado e recorta o ORIGINAL pelos índices encontrados, então lá
+ * qualquer mudança de comprimento (um trim, um espaço colapsado) desalinharia os
+ * dois e comeria letras do título.
+ */
+export function normalizeSearch(value: string): string {
+  return stripDiacritics(value).replace(/\s+/g, ' ').trim();
+}
+
+/** Junta campos de texto num único alvo de busca. */
+export function buildSearchText(...parts: (string | null | undefined)[]): string {
+  return normalizeSearch(parts.filter(Boolean).join(' '));
+}
+
 export function pluralize(count: number, singular: string, plural: string): string {
   return count === 1 ? singular : plural;
 }

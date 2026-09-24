@@ -4,6 +4,8 @@ import { fail, ok, readBody } from '@/lib/api-helpers';
 import { dateKeyToLocal, dateKeyToStored, isValidDateKey } from '@/lib/dates';
 import { journalToDTO } from '@/lib/serialize';
 import { journalEntrySchema } from '@/lib/validations/journal';
+import { buildSearchText } from '@/lib/utils';
+import { scheduleBackup } from '@/lib/backup';
 
 type Params = { params: Promise<{ date: string }> };
 
@@ -55,6 +57,7 @@ export async function PUT(request: Request, { params }: Params) {
     gratitude: data.gratitude ?? null,
     improve: data.improve ?? null,
     freeText: data.freeText ?? null,
+    searchText: buildSearchText(data.summary, data.gratitude, data.improve, data.freeText),
   };
 
   const entry = await prisma.journalEntry.upsert({
@@ -63,6 +66,7 @@ export async function PUT(request: Request, { params }: Params) {
     create: { date: stored, ...payload },
   });
 
+  scheduleBackup();
   return ok(journalToDTO(entry));
 }
 
@@ -75,5 +79,6 @@ export async function DELETE(_request: Request, { params }: Params) {
   if (!entry) return fail('Entrada não encontrada', 404);
 
   await prisma.journalEntry.delete({ where: { date: stored } });
+  scheduleBackup();
   return ok({ date });
 }
