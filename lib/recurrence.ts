@@ -41,16 +41,30 @@ export function describeRecurrence(value: string | null | undefined): string | n
     .join(', ');
 }
 
-/** Próxima data de vencimento depois de concluir uma ocorrência. */
-export function nextOccurrence(value: string | null | undefined, fromKey: DateKey): DateKey | null {
+/**
+ * Próxima data de vencimento depois de concluir uma ocorrência.
+ *
+ * `afterKey` é o piso: a próxima ocorrência nunca cai antes dele. Sem isso, uma
+ * tarefa "todo dia" vencida há duas semanas geraria a próxima também no passado,
+ * e seria preciso concluí-la catorze vezes para a série voltar ao presente.
+ */
+export function nextOccurrence(
+  value: string | null | undefined,
+  fromKey: DateKey,
+  afterKey: DateKey = fromKey,
+): DateKey | null {
   const recurrence = parseRecurrence(value);
   if (!recurrence) return null;
-  if (recurrence.kind === 'daily') return shiftKey(fromKey, 1);
 
-  const current = dateKeyToLocal(fromKey).getDay();
+  // Anda a partir da ocorrência concluída, mas pula tudo que já passou.
+  const base = fromKey > afterKey ? fromKey : afterKey;
+
+  if (recurrence.kind === 'daily') return shiftKey(base, 1);
+
+  const current = dateKeyToLocal(base).getDay();
   for (let step = 1; step <= 7; step += 1) {
     const candidate = (current + step) % 7;
-    if (recurrence.days.includes(candidate)) return shiftKey(fromKey, step);
+    if (recurrence.days.includes(candidate)) return shiftKey(base, step);
   }
   return null;
 }

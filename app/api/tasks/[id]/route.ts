@@ -4,6 +4,8 @@ import { dateKeyFromStored, dateKeyToStored, todayKey } from '@/lib/dates';
 import { nextOccurrence } from '@/lib/recurrence';
 import { taskToDTO } from '@/lib/serialize';
 import { updateTaskSchema } from '@/lib/validations/task';
+import { buildSearchText } from '@/lib/utils';
+import { scheduleBackup } from '@/lib/backup';
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -45,11 +47,19 @@ export async function PATCH(request: Request, { params }: Params) {
       }
     }
 
+    // PATCH é parcial: o alvo de busca precisa do texto JÁ mesclado, senão
+    // editar só as notas apagaria o título do índice.
+    const nextTitle = data.title ?? current.title;
+    const nextNotes = data.notes !== undefined ? data.notes : current.notes;
+
     const task = await tx.task.update({
       where: { id },
       data: {
         ...(data.title !== undefined ? { title: data.title } : {}),
         ...(data.notes !== undefined ? { notes: data.notes } : {}),
+        ...(data.title !== undefined || data.notes !== undefined
+          ? { searchText: buildSearchText(nextTitle, nextNotes) }
+          : {}),
         ...(data.priority !== undefined ? { priority: data.priority } : {}),
         ...(data.dueDate !== undefined
           ? { dueDate: data.dueDate ? dateKeyToStored(data.dueDate) : null }
@@ -68,7 +78,7 @@ export async function PATCH(request: Request, { params }: Params) {
     // da que foi feita — nada é sobrescrito.
     if (isCompleting && current.recurrence) {
       const base = current.dueDate ? dateKeyFromStored(current.dueDate) : todayKey();
-      const next = nextOccurrence(current.recurrence, base);
+      const next = nextOccurrence(current.recurrence, base, todayKey());
       if (next) {
         const last = await tx.task.aggregate({ _max: { order: true } });
         await tx.task.create({
@@ -79,6 +89,7 @@ export async function PATCH(request: Request, { params }: Params) {
             dueDate: dateKeyToStored(next),
             categoryId: current.categoryId,
             recurrence: current.recurrence,
+            searchText: current.searchText,
             order: (last._max.order ?? 0) + 1,
             subtasks: current.subtasks.length
               ? {
@@ -96,6 +107,7 @@ export async function PATCH(request: Request, { params }: Params) {
     return task;
   });
 
+  scheduleBackup();
   return ok(taskToDTO(updated));
 }
 
@@ -104,5 +116,6 @@ export async function DELETE(_request: Request, { params }: Params) {
   const exists = await prisma.task.findUnique({ where: { id } });
   if (!exists) return fail('Tarefa não encontrada', 404);
   await prisma.task.delete({ where: { id } });
+  scheduleBackup();
   return ok({ id });
 }

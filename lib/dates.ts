@@ -66,7 +66,11 @@ export function formatMonthTitle(date: Date): string {
   return format(date, "MMMM 'de' yyyy", { locale: ptBR });
 }
 
-/** Rótulo humano e relativo para uma data de vencimento. */
+/**
+ * Rótulo humano e relativo para uma data de vencimento.
+ * O passado é SEMPRE relativo (até 90 dias): misturar "5 dias atrás" com
+ * "16 de set" na mesma lista de atrasadas esconde qual está mais vencida.
+ */
 export function formatDueLabel(key: DateKey): string {
   const diff = differenceInCalendarDays(dateKeyToLocal(key), startOfDay(new Date()));
   if (diff === 0) return 'Hoje';
@@ -75,7 +79,11 @@ export function formatDueLabel(key: DateKey): string {
   if (diff > 1 && diff < 7) {
     return format(dateKeyToLocal(key), 'EEEE', { locale: ptBR });
   }
-  if (diff < 0 && diff > -7) return `${Math.abs(diff)} dias atrás`;
+  if (diff < 0) {
+    const late = Math.abs(diff);
+    if (late <= 90) return `${late} dias atrás`;
+    return `atrasada desde ${formatShort(key)}`;
+  }
   return formatShort(key);
 }
 
