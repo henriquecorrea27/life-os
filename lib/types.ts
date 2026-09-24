@@ -61,10 +61,13 @@ export interface StatsResponse {
     completedToday: number;
     completedThisWeek: number;
     overdue: number;
+    missed: number;
   };
   taskStreak: { current: number; best: number };
   journalStreak: { current: number; best: number };
-  completionByDay: { date: DateKey; completed: number }[];
+  completionByDay: { date: DateKey; completed: number; missed: number }[];
+  /** Média de (concluídas ÷ previstas) nos dias em que algo foi previsto. */
+  completionRate: { last7: number | null; last30: number | null; daysCounted: number };
   moodByDay: { date: DateKey; mood: Mood; score: number }[];
   moodDistribution: { mood: Mood; count: number }[];
   byCategory: { id: string; name: string; color: string; completed: number; open: number }[];
@@ -72,3 +75,27 @@ export interface StatsResponse {
 }
 
 export type TaskView = 'today' | 'upcoming' | 'all' | 'completed' | 'focus';
+
+export interface ReviewResponse {
+  week: { start: DateKey; end: DateKey };
+  totals: { completed: number; missed: number; rate: number | null };
+  previousTotals: { completed: number; missed: number; rate: number | null };
+  byCategory: { id: string; name: string; color: string; completed: number; missed: number }[];
+  stalled: { id: string; title: string; color: string | null; times: number }[];
+  completedTasks: {
+    id: string;
+    title: string;
+    date: DateKey;
+    categoryName: string | null;
+    categoryColor: string | null;
+  }[];
+  mood: {
+    entries: { date: DateKey; mood: Mood; score: number }[];
+    average: number | null;
+    best: { date: DateKey; mood: Mood } | null;
+    worst: { date: DateKey; mood: Mood } | null;
+    daysLogged: number;
+  };
+  highlights: { date: DateKey; text: string }[];
+  improvements: { date: DateKey; text: string }[];
+}
