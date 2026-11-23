@@ -2,11 +2,11 @@
 rem Launcher do Windows: sobe o servidor e abre o app no Chrome.
 rem Aponte um atalho (.lnk) para este arquivo com icone logo/logo.ico -
 rem .bat sozinho nao aceita icone customizado, o atalho e' o jeito certo.
-rem Caminhos abaixo sao fixos para esta maquina/usuario (henri).
+rem A pasta do projeto e' deduzida da localizacao deste arquivo (pasta pai de scripts).
 setlocal EnableDelayedExpansion
 title Life OS
 
-set "PROJECT_DIR=C:\Users\henri\Documents\todo_journal"
+for %%I in ("%~dp0..") do set "PROJECT_DIR=%%~fI"
 set "URL=http://localhost:3000"
 set "CHROME=C:\Program Files\Google\Chrome\Application\chrome.exe"
 
